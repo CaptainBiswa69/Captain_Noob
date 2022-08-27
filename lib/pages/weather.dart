@@ -121,7 +121,7 @@ class _WeatherState extends State<Weather> {
                 }),
           ),
         ),
-        SizedBox(
+        const SizedBox(
           height: 20,
         ),
         details(indexValue)

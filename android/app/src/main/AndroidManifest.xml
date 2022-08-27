@@ -7,6 +7,8 @@
         android:label="disaster_notifier"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <meta-data android:name="com.google.android.geo.API_KEY"  
+               android:value="AIzaSyCb-1p63rDRqJ5eCszVYnoAOgDv4ZMw9H8"/> 
         <activity
             android:name=".MainActivity"
             android:exported="true"

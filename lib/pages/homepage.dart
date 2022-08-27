@@ -1,7 +1,10 @@
 import 'package:badges/badges.dart';
+import 'package:disaster_notifier/models/alerts.dart';
 import 'package:disaster_notifier/models/current_weather.dart';
+import 'package:disaster_notifier/models/location_id.dart';
 import 'package:disaster_notifier/models/weather_forecast.dart';
 import 'package:disaster_notifier/pages/dos_dont.dart';
+import 'package:disaster_notifier/pages/maps.dart';
 import 'package:disaster_notifier/pages/safety_tips.dart';
 import 'package:disaster_notifier/pages/weather.dart';
 import 'package:disaster_notifier/services.dart/remote_data.dart';
@@ -9,6 +12,7 @@ import 'package:geocoding/geocoding.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter/src/widgets/text.dart' as text;
 
 class Homepage extends StatefulWidget {
@@ -25,6 +29,11 @@ class _HomepageState extends State<Homepage> {
   Position? _position;
   CurrentWeather? _weather;
   WeatherForecast? _weatherForecast;
+  LocationId? _locationId;
+  DateTime now = DateTime.now();
+  String? id;
+  bool isAlerts = false;
+  Alert? _alert;
   final RemoteData _remoteData = RemoteData();
   String img = "143";
   String day = "day";
@@ -34,7 +43,10 @@ class _HomepageState extends State<Homepage> {
     setState(() {});
     getAddress(_position!)
         .then((value) => getCurrentWeather(city!))
-        .then((value) => getForecast(city!));
+        .then((value) => getForecast(city!))
+        .then((value) => getLocationId(city!))
+        .then((value) => getAlerts(_weather!.location.lat,
+            _weather!.location.lon, int.parse(id!), now));
     setState(() {});
   }
 
@@ -49,6 +61,27 @@ class _HomepageState extends State<Homepage> {
 
   getForecast(String city) async {
     _weatherForecast = await _remoteData.getWeatherForecast(city);
+  }
+
+  getLocationId(String city) async {
+    _locationId = await _remoteData.getLocation(city);
+    for (var i = 0; i < _locationId!.results.length; i++) {
+      if (_locationId!.results[i].countryAlpha2 == "IN") {
+        id = _locationId!.results[i].id;
+        break;
+      }
+    }
+  }
+
+  getAlerts(double lat, double long, int id, DateTime date) async {
+    var formatter = DateFormat('yyyy-MM-dd');
+    String formattedDate = formatter.format(now.add(const Duration(days: 10)));
+    String formattedDat = formatter.format(now);
+    _alert =
+        await _remoteData.getAlert(lat, long, id, formattedDat, formattedDate);
+    if (_alert!.count != 0) {
+      isAlerts = true;
+    }
   }
 
   @override
@@ -321,31 +354,40 @@ class _HomepageState extends State<Homepage> {
                   SizedBox(
                     height: 120,
                     width: 120,
-                    child: Card(
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15.0)),
-                      color: const Color(0xffA29CF4),
-                      child: Column(
-                        children: const [
-                          Padding(
-                            padding: EdgeInsets.only(
-                                top: 15, right: 15, left: 15, bottom: 10),
-                            child: Icon(
-                              Icons.near_me,
-                              color: Color(0xff403FFB),
-                              size: 50,
-                            ),
-                          ),
-                          Expanded(
-                            flex: 1,
-                            child: SingleChildScrollView(
-                              child: Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 15),
-                                child: text.Text("Nearby Safe Places"),
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).push(MaterialPageRoute(
+                            builder: (context) => Maps(
+                                  lat: _weather!.location.lat,
+                                  long: _weather!.location.lon,
+                                )));
+                      },
+                      child: Card(
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15.0)),
+                        color: const Color(0xffA29CF4),
+                        child: Column(
+                          children: const [
+                            Padding(
+                              padding: EdgeInsets.only(
+                                  top: 15, right: 15, left: 15, bottom: 10),
+                              child: Icon(
+                                Icons.near_me,
+                                color: Color(0xff403FFB),
+                                size: 50,
                               ),
                             ),
-                          )
-                        ],
+                            Expanded(
+                              flex: 1,
+                              child: SingleChildScrollView(
+                                child: Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 15),
+                                  child: text.Text("Nearby Safe Places"),
+                                ),
+                              ),
+                            )
+                          ],
+                        ),
                       ),
                     ),
                   )
@@ -373,12 +415,12 @@ class _HomepageState extends State<Homepage> {
                             padding: EdgeInsets.only(
                                 top: 15, right: 15, left: 15, bottom: 10),
                             child: Icon(
-                              Icons.search,
+                              Icons.emergency,
                               color: Color(0xff403FFB),
                               size: 50,
                             ),
                           ),
-                          text.Text("Predictions")
+                          text.Text("Emergency")
                         ],
                       ),
                     ),
@@ -444,6 +486,47 @@ class _HomepageState extends State<Homepage> {
                 ],
               ),
             ),
+            const SizedBox(
+              height: 12,
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: SingleChildScrollView(
+                child: Card(
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15.0)),
+                    color: const Color(0xffA8D1DF),
+                    elevation: 5,
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 10),
+                        const Align(
+                          alignment: Alignment.topCenter,
+                          child: Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: text.Text(
+                              "!! Important News !!",
+                              style: TextStyle(
+                                  fontSize: 25,
+                                  color: Colors.red,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(
+                          height: 10,
+                        ),
+                        SizedBox(
+                            height: 180,
+                            child: isAlerts
+                                ? text.Text(
+                                    _alert?.results[0].description ?? "")
+                                : const text.Text(
+                                    "There is no alerts for your loclity for now"))
+                      ],
+                    )),
+              ),
+            )
           ],
         ),
       ),
