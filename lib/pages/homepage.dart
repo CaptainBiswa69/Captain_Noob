@@ -1,4 +1,7 @@
 import 'package:badges/badges.dart';
+import 'package:disaster_notifier/models/current_weather.dart';
+import 'package:disaster_notifier/pages/weather.dart';
+import 'package:disaster_notifier/services.dart/remote_data.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -14,12 +17,25 @@ class Homepage extends StatefulWidget {
 class _HomepageState extends State<Homepage> {
   String? subLocality;
   String? city;
+  bool isCuWeatherLoaded = false;
   Position? _position;
+  CurrentWeather? _weather;
+  final RemoteData _remoteData = RemoteData();
 
   getCods() async {
     _position = await _determinePosition();
     setState(() {});
-    getAddress(_position!);
+    getAddress(_position!).then((value) => getCurrentWeather(city!));
+    setState(() {});
+  }
+
+  getCurrentWeather(String city) async {
+    _weather = await _remoteData.getCurrentWeather(city);
+    if (_weather != null) {
+      setState(() {
+        isCuWeatherLoaded = true;
+      });
+    }
   }
 
   @override
@@ -147,6 +163,89 @@ class _HomepageState extends State<Homepage> {
               height: 20,
             ),
             Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: Card(
+                color: const Color(0xffE5E2F1),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(5.0)),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    Column(
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              "${_weather?.current.tempC.toString()} \u2070",
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blue,
+                                fontSize: 30,
+                              ),
+                            ),
+                            Image(
+                                image: AssetImage(
+                                    "assets/weather/64x64/${daynight(_weather?.current.condition.icon ?? "//cdn.weatherapi.com/weather/64x64/day/143.png")}/${weathericonString(_weather?.current.condition.icon ?? "//cdn.weatherapi.com/weather/64x64/day/143.png")}"))
+                          ],
+                        ),
+                        const SizedBox(
+                          height: 10,
+                        ),
+                        Text(
+                          "${_weather?.current.condition.text}",
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blue,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Column(
+                        children: [
+                          Text(
+                            "Feels Like: ${_weather?.current.feelslikeC} \u2070C",
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue,
+                              fontSize: 20,
+                            ),
+                          ),
+                          const SizedBox(
+                            height: 7,
+                          ),
+                          Text(
+                            "Humidity: ${_weather?.current.humidity}",
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue,
+                              fontSize: 20,
+                            ),
+                          ),
+                          const SizedBox(
+                            height: 7,
+                          ),
+                          Text(
+                            "Clouds: ${_weather?.current.cloud}",
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue,
+                              fontSize: 20,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(
+              height: 20,
+            ),
+            Padding(
               padding: const EdgeInsets.all(8.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -154,23 +253,34 @@ class _HomepageState extends State<Homepage> {
                   SizedBox(
                     height: 120,
                     width: 120,
-                    child: Card(
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15.0)),
-                      color: const Color(0xffA29CF4),
-                      child: Column(
-                        children: const [
-                          Padding(
-                            padding: EdgeInsets.only(
-                                top: 15, right: 15, left: 15, bottom: 10),
-                            child: Icon(
-                              Icons.sunny,
-                              color: Color(0xff403FFB),
-                              size: 50,
+                    child: GestureDetector(
+                      onTap: () {
+                        if (city == null) {
+                        } else {
+                          Navigator.of(context).push(MaterialPageRoute(
+                              builder: (context) => Weather(
+                                    city: city!,
+                                  )));
+                        }
+                      },
+                      child: Card(
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15.0)),
+                        color: const Color(0xffA29CF4),
+                        child: Column(
+                          children: const [
+                            Padding(
+                              padding: EdgeInsets.only(
+                                  top: 15, right: 15, left: 15, bottom: 10),
+                              child: Icon(
+                                Icons.sunny,
+                                color: Color(0xff403FFB),
+                                size: 50,
+                              ),
                             ),
-                          ),
-                          Text("Weather")
-                        ],
+                            Text("Weather")
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -231,6 +341,98 @@ class _HomepageState extends State<Homepage> {
                 ],
               ),
             ),
+            const SizedBox(
+              height: 12,
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  SizedBox(
+                    height: 120,
+                    width: 120,
+                    child: Card(
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15.0)),
+                      color: const Color(0xffA29CF4),
+                      child: Column(
+                        children: const [
+                          Padding(
+                            padding: EdgeInsets.only(
+                                top: 15, right: 15, left: 15, bottom: 10),
+                            child: Icon(
+                              Icons.search,
+                              color: Color(0xff403FFB),
+                              size: 50,
+                            ),
+                          ),
+                          Text("Predictions")
+                        ],
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    height: 120,
+                    width: 120,
+                    child: GestureDetector(
+                      onTap: () {
+                        // Navigator.of(context).push(MaterialPageRoute(
+                        //     builder: (context) => const DosDont()));
+                      },
+                      child: Card(
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15.0)),
+                        color: const Color(0xffA29CF4),
+                        child: Column(
+                          children: const [
+                            Padding(
+                              padding: EdgeInsets.only(
+                                  top: 15, right: 15, left: 15, bottom: 10),
+                              child: Icon(
+                                Icons.book,
+                                color: Color(0xff403FFB),
+                                size: 50,
+                              ),
+                            ),
+                            Text("Do's / Don't")
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    height: 120,
+                    width: 120,
+                    child: GestureDetector(
+                      onTap: () {
+                        // Navigator.of(context).push(MaterialPageRoute(
+                        //     builder: (context) => const SafetyTips()));
+                      },
+                      child: Card(
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15.0)),
+                        color: const Color(0xffA29CF4),
+                        child: Column(
+                          children: const [
+                            Padding(
+                              padding: EdgeInsets.only(
+                                  top: 15, right: 15, left: 15, bottom: 10),
+                              child: Icon(
+                                Icons.tips_and_updates,
+                                color: Color(0xff403FFB),
+                                size: 50,
+                              ),
+                            ),
+                            Text("Safety Tips")
+                          ],
+                        ),
+                      ),
+                    ),
+                  )
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -266,5 +468,13 @@ class _HomepageState extends State<Homepage> {
     subLocality = placemarks[0].subLocality;
     city = placemarks[0].locality;
     setState(() {});
+  }
+
+  String weathericonString(String z) {
+    return "${z.substring(39, 42)}.png";
+  }
+
+  String daynight(String z) {
+    return z.substring(35, 38);
   }
 }
