@@ -35,7 +35,9 @@ dependencies:
   geocoding: ^2.0.4
   responsive_framework: ^0.2.0
   http: ^0.13.5
-  weather_icons: ^3.0.0
+  animated_splash_screen: ^1.1.0
+  syncfusion_flutter_pdfviewer: ^20.2.45-beta
+  youtube_player_flutter: ^8.1.0
 
 
   # The following adds the Cupertino Icons font to your application.
@@ -68,6 +70,7 @@ flutter:
   assets:
     - assets/weather/64x64/day/
     - assets/weather/64x64/night/
+    - assets/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

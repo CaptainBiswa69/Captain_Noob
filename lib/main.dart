@@ -1,3 +1,4 @@
+import 'package:animated_splash_screen/animated_splash_screen.dart';
 import 'package:disaster_notifier/pages/homepage.dart';
 import 'package:disaster_notifier/theme.dart';
 import 'package:flutter/material.dart';
@@ -26,6 +27,10 @@ class MyApp extends StatelessWidget {
               ],
             ),
         theme: myTheme,
-        home: const Homepage());
+        home: AnimatedSplashScreen(
+            backgroundColor: Colors.white,
+            splash: Image.asset("assets/logo.gif"),
+            splashIconSize: 300,
+            nextScreen: const Homepage()));
   }
 }

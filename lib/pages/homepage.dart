@@ -1,11 +1,15 @@
 import 'package:badges/badges.dart';
 import 'package:disaster_notifier/models/current_weather.dart';
+import 'package:disaster_notifier/models/weather_forecast.dart';
+import 'package:disaster_notifier/pages/dos_dont.dart';
+import 'package:disaster_notifier/pages/safety_tips.dart';
 import 'package:disaster_notifier/pages/weather.dart';
 import 'package:disaster_notifier/services.dart/remote_data.dart';
-import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/src/widgets/text.dart' as text;
 
 class Homepage extends StatefulWidget {
   const Homepage({Key? key}) : super(key: key);
@@ -20,12 +24,17 @@ class _HomepageState extends State<Homepage> {
   bool isCuWeatherLoaded = false;
   Position? _position;
   CurrentWeather? _weather;
+  WeatherForecast? _weatherForecast;
   final RemoteData _remoteData = RemoteData();
+  String img = "143";
+  String day = "day";
 
   getCods() async {
     _position = await _determinePosition();
     setState(() {});
-    getAddress(_position!).then((value) => getCurrentWeather(city!));
+    getAddress(_position!)
+        .then((value) => getCurrentWeather(city!))
+        .then((value) => getForecast(city!));
     setState(() {});
   }
 
@@ -36,6 +45,10 @@ class _HomepageState extends State<Homepage> {
         isCuWeatherLoaded = true;
       });
     }
+  }
+
+  getForecast(String city) async {
+    _weatherForecast = await _remoteData.getWeatherForecast(city);
   }
 
   @override
@@ -50,12 +63,13 @@ class _HomepageState extends State<Homepage> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text("Disaster Notifier", style: TextStyle(fontSize: 30)),
+        title: const text.Text("Disaster Notifier",
+            style: TextStyle(fontSize: 30)),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 10),
             child: Badge(
-              badgeContent: const Text('10'),
+              badgeContent: const text.Text("10"),
               position: BadgePosition.topEnd(top: 5, end: 5),
               child: IconButton(
                   onPressed: () {},
@@ -143,7 +157,7 @@ class _HomepageState extends State<Homepage> {
                         const SizedBox(
                           width: 10,
                         ),
-                        const Text("Location : "),
+                        const text.Text("Location : "),
                         const SizedBox(
                           width: 10,
                         ),
@@ -151,7 +165,7 @@ class _HomepageState extends State<Homepage> {
                           flex: 1,
                           child: SingleChildScrollView(
                             scrollDirection: Axis.horizontal,
-                            child: Text(
+                            child: text.Text(
                                 "$subLocality, $city  ${_position?.latitude.toString() ?? " "}  ${_position?.longitude.toString() ?? " "}"),
                           ),
                         )
@@ -175,23 +189,20 @@ class _HomepageState extends State<Homepage> {
                       children: [
                         Row(
                           children: [
-                            Text(
-                              "${_weather?.current.tempC.toString()} \u2070",
+                            text.Text(
+                              "${_weather?.current.tempC.toString()} \u2070C",
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: Colors.blue,
                                 fontSize: 30,
                               ),
-                            ),
-                            Image(
-                                image: AssetImage(
-                                    "assets/weather/64x64/${daynight(_weather?.current.condition.icon ?? "//cdn.weatherapi.com/weather/64x64/day/143.png")}/${weathericonString(_weather?.current.condition.icon ?? "//cdn.weatherapi.com/weather/64x64/day/143.png")}"))
+                            )
                           ],
                         ),
                         const SizedBox(
                           height: 10,
                         ),
-                        Text(
+                        text.Text(
                           "${_weather?.current.condition.text}",
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
@@ -205,7 +216,7 @@ class _HomepageState extends State<Homepage> {
                       padding: const EdgeInsets.all(8.0),
                       child: Column(
                         children: [
-                          Text(
+                          text.Text(
                             "Feels Like: ${_weather?.current.feelslikeC} \u2070C",
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
@@ -216,7 +227,7 @@ class _HomepageState extends State<Homepage> {
                           const SizedBox(
                             height: 7,
                           ),
-                          Text(
+                          text.Text(
                             "Humidity: ${_weather?.current.humidity}",
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
@@ -227,7 +238,7 @@ class _HomepageState extends State<Homepage> {
                           const SizedBox(
                             height: 7,
                           ),
-                          Text(
+                          text.Text(
                             "Clouds: ${_weather?.current.cloud}",
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
@@ -259,7 +270,7 @@ class _HomepageState extends State<Homepage> {
                         } else {
                           Navigator.of(context).push(MaterialPageRoute(
                               builder: (context) => Weather(
-                                    city: city!,
+                                    weatherForecast: _weatherForecast!,
                                   )));
                         }
                       },
@@ -278,7 +289,7 @@ class _HomepageState extends State<Homepage> {
                                 size: 50,
                               ),
                             ),
-                            Text("Weather")
+                            text.Text("Weather")
                           ],
                         ),
                       ),
@@ -302,7 +313,7 @@ class _HomepageState extends State<Homepage> {
                               size: 50,
                             ),
                           ),
-                          Text("Satellite Map")
+                          text.Text("Satellite Map")
                         ],
                       ),
                     ),
@@ -330,7 +341,7 @@ class _HomepageState extends State<Homepage> {
                             child: SingleChildScrollView(
                               child: Padding(
                                 padding: EdgeInsets.symmetric(horizontal: 15),
-                                child: Text("Nearby Safe Places"),
+                                child: text.Text("Nearby Safe Places"),
                               ),
                             ),
                           )
@@ -367,7 +378,7 @@ class _HomepageState extends State<Homepage> {
                               size: 50,
                             ),
                           ),
-                          Text("Predictions")
+                          text.Text("Predictions")
                         ],
                       ),
                     ),
@@ -377,8 +388,8 @@ class _HomepageState extends State<Homepage> {
                     width: 120,
                     child: GestureDetector(
                       onTap: () {
-                        // Navigator.of(context).push(MaterialPageRoute(
-                        //     builder: (context) => const DosDont()));
+                        Navigator.of(context).push(MaterialPageRoute(
+                            builder: (context) => const DosDont()));
                       },
                       child: Card(
                         shape: RoundedRectangleBorder(
@@ -395,7 +406,7 @@ class _HomepageState extends State<Homepage> {
                                 size: 50,
                               ),
                             ),
-                            Text("Do's / Don't")
+                            text.Text("Do's / Don't")
                           ],
                         ),
                       ),
@@ -406,8 +417,8 @@ class _HomepageState extends State<Homepage> {
                     width: 120,
                     child: GestureDetector(
                       onTap: () {
-                        // Navigator.of(context).push(MaterialPageRoute(
-                        //     builder: (context) => const SafetyTips()));
+                        Navigator.of(context).push(MaterialPageRoute(
+                            builder: (context) => const SafetyTips()));
                       },
                       child: Card(
                         shape: RoundedRectangleBorder(
@@ -424,7 +435,7 @@ class _HomepageState extends State<Homepage> {
                                 size: 50,
                               ),
                             ),
-                            Text("Safety Tips")
+                            text.Text("Safety Tips")
                           ],
                         ),
                       ),
@@ -468,13 +479,5 @@ class _HomepageState extends State<Homepage> {
     subLocality = placemarks[0].subLocality;
     city = placemarks[0].locality;
     setState(() {});
-  }
-
-  String weathericonString(String z) {
-    return "${z.substring(39, 42)}.png";
-  }
-
-  String daynight(String z) {
-    return z.substring(35, 38);
   }
 }
