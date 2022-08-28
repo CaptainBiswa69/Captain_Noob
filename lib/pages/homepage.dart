@@ -4,11 +4,17 @@ import 'package:disaster_notifier/models/current_weather.dart';
 import 'package:disaster_notifier/models/location_id.dart';
 import 'package:disaster_notifier/models/weather_forecast.dart';
 import 'package:disaster_notifier/pages/dos_dont.dart';
+import 'package:disaster_notifier/pages/emergency.dart';
 import 'package:disaster_notifier/pages/maps.dart';
+import 'package:disaster_notifier/pages/pdf_view.dart';
 import 'package:disaster_notifier/pages/safety_tips.dart';
+import 'package:disaster_notifier/pages/satelite.dart';
+import 'package:disaster_notifier/pages/sos_contact.dart';
 import 'package:disaster_notifier/pages/weather.dart';
 import 'package:disaster_notifier/services.dart/remote_data.dart';
+import 'package:flutter_sms/flutter_sms.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter/material.dart';
@@ -37,6 +43,7 @@ class _HomepageState extends State<Homepage> {
   final RemoteData _remoteData = RemoteData();
   String img = "143";
   String day = "day";
+  List<String> rec = ["7008721914", "1990928662"];
 
   getCods() async {
     _position = await _determinePosition();
@@ -46,7 +53,8 @@ class _HomepageState extends State<Homepage> {
         .then((value) => getForecast(city!))
         .then((value) => getLocationId(city!))
         .then((value) => getAlerts(_weather!.location.lat,
-            _weather!.location.lon, int.parse(id!), now));
+            _weather!.location.lon, int.parse(id!), now))
+        .then((value) => store());
     setState(() {});
   }
 
@@ -57,6 +65,12 @@ class _HomepageState extends State<Homepage> {
         isCuWeatherLoaded = true;
       });
     }
+  }
+
+  store() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setDouble("lat", _weather!.location.lat);
+    prefs.setDouble("long", _weather!.location.lon);
   }
 
   getForecast(String city) async {
@@ -136,14 +150,23 @@ class _HomepageState extends State<Homepage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   IconButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        _sendSMS(
+                            "Help ${_weather!.location.lat} ${_weather!.location.lon}",
+                            rec);
+                      },
                       icon: const Icon(
                         Icons.help_center,
                         size: 30,
                         color: Color(0xffE5E3F1),
                       )),
                   IconButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.of(context).push(MaterialPageRoute(
+                            builder: ((context) => const PdfView(
+                                pdfUrl:
+                                    "https://firebasestorage.googleapis.com/v0/b/serv-b58fb.appspot.com/o/about_us%20(1).pdf?alt=media&token=28cf12a3-6a2e-42b0-9c59-5a174973ea0f"))));
+                      },
                       icon: const Icon(
                         Icons.info,
                         size: 30,
@@ -154,7 +177,7 @@ class _HomepageState extends State<Homepage> {
                   ),
                   IconButton(
                       onPressed: () {
-                        launchUrlString('tel: +91 7008724191');
+                        launchUrlString('tel: +91 011-26701728');
                       },
                       icon: const Icon(
                         Icons.call,
@@ -162,9 +185,12 @@ class _HomepageState extends State<Homepage> {
                         color: Color(0xffE5E3F1),
                       )),
                   IconButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.of(context).push(MaterialPageRoute(
+                            builder: ((context) => const Sos())));
+                      },
                       icon: const Icon(
-                        Icons.map,
+                        Icons.add,
                         size: 30,
                         color: Color(0xffE5E3F1),
                       ))
@@ -331,23 +357,32 @@ class _HomepageState extends State<Homepage> {
                   SizedBox(
                     height: 120,
                     width: 120,
-                    child: Card(
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15.0)),
-                      color: const Color(0xffA29CF4),
-                      child: Column(
-                        children: const [
-                          Padding(
-                            padding: EdgeInsets.only(
-                                top: 15, right: 15, left: 15, bottom: 10),
-                            child: Icon(
-                              Icons.satellite,
-                              color: Color(0xff403FFB),
-                              size: 50,
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).push(MaterialPageRoute(
+                            builder: (context) => SMaps(
+                                  lat: _weather!.location.lat,
+                                  long: _weather!.location.lon,
+                                )));
+                      },
+                      child: Card(
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15.0)),
+                        color: const Color(0xffA29CF4),
+                        child: Column(
+                          children: const [
+                            Padding(
+                              padding: EdgeInsets.only(
+                                  top: 15, right: 15, left: 15, bottom: 10),
+                              child: Icon(
+                                Icons.satellite,
+                                color: Color(0xff403FFB),
+                                size: 50,
+                              ),
                             ),
-                          ),
-                          text.Text("Satellite Map")
-                        ],
+                            text.Text("Satellite Map")
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -405,23 +440,29 @@ class _HomepageState extends State<Homepage> {
                   SizedBox(
                     height: 120,
                     width: 120,
-                    child: Card(
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15.0)),
-                      color: const Color(0xffA29CF4),
-                      child: Column(
-                        children: const [
-                          Padding(
-                            padding: EdgeInsets.only(
-                                top: 15, right: 15, left: 15, bottom: 10),
-                            child: Icon(
-                              Icons.emergency,
-                              color: Color(0xff403FFB),
-                              size: 50,
+                    child: GestureDetector(
+                      onTap: (() {
+                        Navigator.of(context).push(MaterialPageRoute(
+                            builder: (context) => const Emergency()));
+                      }),
+                      child: Card(
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15.0)),
+                        color: const Color(0xffA29CF4),
+                        child: Column(
+                          children: const [
+                            Padding(
+                              padding: EdgeInsets.only(
+                                  top: 15, right: 15, left: 15, bottom: 10),
+                              child: Icon(
+                                Icons.emergency,
+                                color: Color(0xff403FFB),
+                                size: 50,
+                              ),
                             ),
-                          ),
-                          text.Text("Emergency")
-                        ],
+                            text.Text("Emergency")
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -562,5 +603,15 @@ class _HomepageState extends State<Homepage> {
     subLocality = placemarks[0].subLocality;
     city = placemarks[0].locality;
     setState(() {});
+  }
+
+  Future<void> _sendSMS(String message, List<String> recipents) async {
+    try {
+      String _result = await sendSMS(
+        message: "Hello",
+        recipients: rec,
+        sendDirect: true,
+      );
+    } catch (error) {}
   }
 }

@@ -1,21 +1,38 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
-class Maps extends StatefulWidget {
+class SMaps extends StatefulWidget {
   final double lat;
   final double long;
-  const Maps({Key? key, required this.lat, required this.long})
+  const SMaps({Key? key, required this.lat, required this.long})
       : super(key: key);
 
   @override
-  State<Maps> createState() => _MapsState();
+  State<SMaps> createState() => _MapsState();
 }
 
-class _MapsState extends State<Maps> {
+class _MapsState extends State<SMaps> {
   late GoogleMapController myController;
 
   void _onMapCreated(GoogleMapController controller) {
     myController = controller;
+  }
+
+  LatLng? currentPostion;
+
+  void _getUserLocation() async {
+    var position = await GeolocatorPlatform.instance.getCurrentPosition();
+
+    setState(() {
+      currentPostion = LatLng(position.latitude, position.longitude);
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _getUserLocation();
   }
 
   @override
@@ -23,18 +40,18 @@ class _MapsState extends State<Maps> {
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
-          title: Text('Maps'),
+          title: const Text('Maps'),
           backgroundColor: Colors.green,
         ),
         body: Stack(
           children: <Widget>[
             GoogleMap(
-              mapType: MapType.normal,
+              mapType: MapType.satellite,
               myLocationButtonEnabled: true,
               myLocationEnabled: true,
               onMapCreated: _onMapCreated,
               initialCameraPosition: CameraPosition(
-                target: LatLng(widget.lat, widget.long),
+                target: currentPostion ?? LatLng(widget.lat, widget.long),
                 zoom: 15.0,
               ),
             ),

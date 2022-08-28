@@ -130,11 +130,12 @@ class _WeatherState extends State<Weather> {
   }
 
   String weathericonString(String z) {
-    if (z.substring(39, 42) == "day") {
-      return "${z.substring(39, 42)}.png";
-    } else {
-      return "${z.substring(41, 44)}.png";
-    }
+    // if (z.substring(39, 42) == "day") {
+    //   return "${z.substring(39, 42)}.png";
+    // } else {
+    //   return "${z.substring(41, 44)}.png";
+    // }
+    return "${z.substring(39, 42)}.png";
   }
 
   String get(String z) {
