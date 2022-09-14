@@ -30,6 +30,7 @@ dependencies:
   flutter:
     sdk: flutter
   badges: ^2.0.3
+  flutter_dotenv: ^5.0.2
   url_launcher: ^6.1.5
   geolocator: ^9.0.1
   geocoding: ^2.0.4
@@ -76,6 +77,7 @@ flutter:
     - assets/weather/64x64/day/
     - assets/weather/64x64/night/
     - assets/
+    - .env
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

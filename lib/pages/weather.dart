@@ -1,12 +1,19 @@
-import 'package:disaster_notifier/models/weather_forecast.dart';
+import 'package:disaster_notifier/models/current_weather_forecast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/text.dart' as text;
 import 'package:intl/intl.dart';
 
-class Weather extends StatefulWidget {
-  final WeatherForecast weatherForecast;
+import '../services/remote_data.dart';
 
-  const Weather({Key? key, required this.weatherForecast}) : super(key: key);
+class Weather extends StatefulWidget {
+  final double lat;
+  final double lon;
+
+  const Weather({
+    Key? key,
+    required this.lat,
+    required this.lon,
+  }) : super(key: key);
 
   @override
   State<Weather> createState() => _WeatherState();
@@ -15,139 +22,169 @@ class Weather extends StatefulWidget {
 class _WeatherState extends State<Weather> {
   String? img;
   int indexValue = 0;
+  int? date;
+  bool isLoaded = false;
+  final RemoteData _remoteData = RemoteData();
+  CurrentWeatherOpenForecast? _openWeatherforecast;
+  @override
+  void initState() {
+    super.initState();
+    getForecast(widget.lat, widget.lon);
+  }
+
+  getForecast(double lat, double lon) async {
+    _openWeatherforecast = await _remoteData.getCurrentWeatherOpenForecast(
+        lat.toString(), lon.toString());
+    if (_openWeatherforecast != null) {
+      isLoaded = true;
+    }
+    date = _openWeatherforecast?.list[0].dtTxt.day;
+    setState(() {});
+  }
+
+  String getpng(String val) {
+    if (val.length > 9) {
+      String l = val[val.length - 1].toLowerCase();
+      String f = val.substring(9, 11);
+      return f + l;
+    } else {
+      return "04n";
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const text.Text("Weather Forecaster"),
       ),
-      body: Column(children: [
-        Card(
-          elevation: 5,
-          color: const Color(0xffB5B5B5),
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(35.0),
-                child: Align(
-                  alignment: Alignment.topLeft,
-                  child: text.Text(
-                    widget.weatherForecast.location.name,
-                    style: const TextStyle(fontSize: 35),
-                  ),
-                ),
-              ),
-              Row(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Align(
-                      alignment: Alignment.topLeft,
-                      child: Image.asset(
-                        "assets/weather/64x64/${daynight(widget.weatherForecast.current.isDay)}/${weathericonString(widget.weatherForecast.current.condition.icon)}",
-                        height: 100,
-                        width: 100,
-                        scale: 0.1,
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Align(
+      body: isLoaded
+          ? Column(children: [
+              Card(
+                elevation: 5,
+                color: const Color(0xffB5B5B5),
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(35.0),
+                      child: Align(
                         alignment: Alignment.topLeft,
                         child: text.Text(
-                          "${widget.weatherForecast.current.tempC} \u2070C",
-                          style: const TextStyle(fontSize: 40),
-                        )),
-                  )
-                ],
+                          _openWeatherforecast!.list[0].main.temp.toString(),
+                          style: const TextStyle(fontSize: 35),
+                        ),
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(20.0),
+                          child: Align(
+                            alignment: Alignment.topLeft,
+                            child: Image.network(
+                              "http://openweathermap.org/img/w/${getpng((_openWeatherforecast?.list[0].weather[0].icon).toString())}.png",
+                              height: 100,
+                              width: 100,
+                              scale: 0.1,
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Align(
+                              alignment: Alignment.topLeft,
+                              child: text.Text(
+                                "${_openWeatherforecast!.list[0].main.temp.toString()} \u2070C",
+                                style: const TextStyle(fontSize: 40),
+                              )),
+                        )
+                      ],
+                    ),
+                    weatherdata(
+                        "Humidity",
+                        _openWeatherforecast!.list[0].main.humidity.toString(),
+                        "%"),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    weatherdata(
+                        "Pressure",
+                        _openWeatherforecast!.list[0].main.pressure.toString(),
+                        "hPa"),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    weatherdata(
+                        "Wind Speed",
+                        _openWeatherforecast!.list[0].wind.speed.toString(),
+                        "Km"),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    weatherdata(
+                        "Visibility",
+                        _openWeatherforecast!.list[0].visibility.toString(),
+                        "m"),
+                    const SizedBox(
+                      height: 20,
+                    ),
+                  ],
+                ),
               ),
-              weatherdata(
-                  "Humidity", widget.weatherForecast.current.humidity, "%"),
               const SizedBox(
                 height: 10,
               ),
-              weatherdata(
-                  "Pressure", widget.weatherForecast.current.pressureMb, "hPa"),
-              const SizedBox(
-                height: 10,
+              SizedBox(
+                height: 150,
+                child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _openWeatherforecast!.list.length,
+                    itemBuilder: (context, index) {
+                      if (date == _openWeatherforecast?.list[index].dtTxt.day) {
+                        date = date! + 1;
+                        return GestureDetector(
+                          onTap: (() => setState(() {
+                                indexValue = index;
+                              })),
+                          child: Card(
+                            child: forecastWidget(index),
+                          ),
+                        );
+                      } else if (date ==
+                          _openWeatherforecast!.list[0].dtTxt.day + 5) {
+                        date = _openWeatherforecast?.list[0].dtTxt.day;
+                        return Container();
+                      } else {
+                        return Container();
+                      }
+                    }),
               ),
-              weatherdata(
-                  "Wind Speed", widget.weatherForecast.current.windKph, "Km"),
-              const SizedBox(
-                height: 10,
-              ),
-              weatherdata(
-                  "Visibility", widget.weatherForecast.current.visKm, "km"),
               const SizedBox(
                 height: 20,
               ),
-            ],
-          ),
-        ),
-        const SizedBox(
-          height: 10,
-        ),
-        SizedBox(
-          height: 150,
-          child: Card(
-            child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: widget.weatherForecast.forecast.forecastday.length,
-                itemBuilder: (context, index) {
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        indexValue = index;
-                      });
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.all(15.0),
-                      child: Column(
-                        children: [
-                          Image.asset(
-                              "assets/weather/64x64/day/${(widget.weatherForecast.forecast.forecastday[index].day.condition.icon).substring(39, 42)}.png"),
-                          text.Text(
-                              "${widget.weatherForecast.forecast.forecastday[index].day.avgtempC.toString()} \u2070C"),
-                          const SizedBox(
-                            height: 5,
-                          ),
-                          text.Text(
-                              " ${DateFormat("EEEE").format(widget.weatherForecast.forecast.forecastday[index].date)}  ${widget.weatherForecast.forecast.forecastday[index].date.day.toString()}")
-                        ],
-                      ),
-                    ),
-                  );
-                }),
-          ),
-        ),
-        const SizedBox(
-          height: 20,
-        ),
-        details(indexValue)
-      ]),
+              details(indexValue)
+            ])
+          : const Center(child: CircularProgressIndicator()),
     );
   }
 
-  String weathericonString(String z) {
-    // if (z.substring(39, 42) == "day") {
-    //   return "${z.substring(39, 42)}.png";
-    // } else {
-    //   return "${z.substring(41, 44)}.png";
-    // }
-    return "${z.substring(39, 42)}.png";
-  }
-
-  String get(String z) {
-    return "${z.substring(39, 42)}.png";
-  }
-
-  String daynight(int v) {
-    if (v == 0) {
-      return "night";
-    } else {
-      return "day";
-    }
+  Padding forecastWidget(int index) {
+    return Padding(
+      padding: const EdgeInsets.all(15.0),
+      child: Column(
+        children: [
+          Image(
+              image: NetworkImage(
+                  "http://openweathermap.org/img/w/${getpng((_openWeatherforecast?.list[index].weather[0].icon).toString())}.png")),
+          text.Text(
+              "${_openWeatherforecast!.list[index].main.temp.toString()} \u2070C"),
+          const SizedBox(
+            height: 5,
+          ),
+          text.Text(" ${_openWeatherforecast!.list[index].dtTxt.day}")
+        ],
+      ),
+    );
   }
 
   Widget weatherdata(String s, var value, var unit) {
@@ -168,14 +205,11 @@ class _WeatherState extends State<Weather> {
       child: Card(
         child: Column(children: [
           const SizedBox(
-            height: 15,
+            height: 5,
           ),
           text.Text(
-            widget
-                .weatherForecast.forecast.forecastday[index].day.condition.text
-                .toString()
-                .substring(5),
-            style: const TextStyle(fontSize: 20),
+            _openWeatherforecast!.list[index].weather[0].description.toString(),
+            style: const TextStyle(fontSize: 15),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -183,53 +217,53 @@ class _WeatherState extends State<Weather> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(
-                  height: 20,
+                  height: 10,
                 ),
                 text.Text(
-                  "MaxTemp : ${widget.weatherForecast.forecast.forecastday[index].day.maxtempC.toString()} \u2070C",
-                  style: const TextStyle(fontSize: 20),
+                  "MaxTemp : ${_openWeatherforecast!.list[index].main.tempMax} \u2070C",
+                  style: const TextStyle(fontSize: 15),
                 ),
                 const SizedBox(
                   height: 10,
                 ),
                 text.Text(
-                  "MinTemp : ${widget.weatherForecast.forecast.forecastday[index].day.mintempC.toString()} \u2070C",
-                  style: const TextStyle(fontSize: 20),
+                  "MinTemp : ${_openWeatherforecast!.list[index].main.tempMin} \u2070C",
+                  style: const TextStyle(fontSize: 15),
                 ),
                 const SizedBox(
                   height: 10,
                 ),
                 text.Text(
-                  "AvgTemp : ${widget.weatherForecast.forecast.forecastday[index].day.avgtempC.toString()} \u2070C",
-                  style: const TextStyle(fontSize: 20),
+                  "Sea Level : ${_openWeatherforecast!.list[index].main.seaLevel}",
+                  style: const TextStyle(fontSize: 15),
                 ),
                 const SizedBox(
                   height: 10,
                 ),
                 text.Text(
-                  "MaxWind : ${widget.weatherForecast.forecast.forecastday[index].day.maxwindKph.toString()} Kmph",
-                  style: const TextStyle(fontSize: 20),
+                  "MaxWind : ${_openWeatherforecast!.list[index].wind.speed} Kmph",
+                  style: const TextStyle(fontSize: 15),
                 ),
                 const SizedBox(
                   height: 10,
                 ),
                 text.Text(
-                  "Avg Visibility : ${widget.weatherForecast.forecast.forecastday[index].day.avgvisKm.toString()} Km",
-                  style: const TextStyle(fontSize: 20),
+                  "Avg Visibility : ${_openWeatherforecast!.list[index].visibility} m",
+                  style: const TextStyle(fontSize: 15),
                 ),
                 const SizedBox(
                   height: 10,
                 ),
                 text.Text(
-                  "Avg Humidity: ${widget.weatherForecast.forecast.forecastday[index].day.avghumidity.toString()}%",
-                  style: const TextStyle(fontSize: 20),
+                  "Avg Humidity: ${_openWeatherforecast!.list[index].main.humidity}%",
+                  style: const TextStyle(fontSize: 15),
                 ),
                 const SizedBox(
                   height: 10,
                 ),
                 text.Text(
-                  "Chance Of Rain: ${widget.weatherForecast.forecast.forecastday[index].day.dailyChanceOfRain.toString()}/100",
-                  style: const TextStyle(fontSize: 20),
+                  "Rain Volume in last 3hr: ${_openWeatherforecast!.list[index].rain?.the3H.toString()}",
+                  style: const TextStyle(fontSize: 15),
                 ),
                 const SizedBox(
                   height: 20,

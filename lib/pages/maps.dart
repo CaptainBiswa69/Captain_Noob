@@ -23,7 +23,7 @@ class _MapsState extends State<Maps> {
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
-          title: Text('Maps'),
+          title: const Text('Maps'),
           backgroundColor: Colors.green,
         ),
         body: Stack(

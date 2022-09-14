@@ -163,7 +163,7 @@ class _SosState extends State<Sos> {
                 child: Text('OK'),
                 onPressed: () {
                   setState(() {
-                    update(s, _editingController.text);
+                    // update(s, _editingController.text);
                     Navigator.pop(context);
                   });
                 },

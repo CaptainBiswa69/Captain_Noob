@@ -2,9 +2,11 @@ import 'package:animated_splash_screen/animated_splash_screen.dart';
 import 'package:disaster_notifier/pages/homepage.dart';
 import 'package:disaster_notifier/theme.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:responsive_framework/responsive_framework.dart';
 
-void main() {
+Future main() async {
+  await dotenv.load(fileName: ".env");
   runApp(const MyApp());
 }
 
