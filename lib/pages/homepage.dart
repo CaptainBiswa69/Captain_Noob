@@ -1,5 +1,4 @@
 import 'package:badges/badges.dart';
-import 'package:disaster_notifier/models/current_weather_forecast.dart';
 import 'package:disaster_notifier/models/current_weather_open.dart';
 import 'package:disaster_notifier/pages/dos_dont.dart';
 import 'package:disaster_notifier/pages/emergency.dart';
@@ -36,7 +35,6 @@ class _HomepageState extends State<Homepage> {
   bool isAlerts = false;
   final RemoteData _remoteData = RemoteData();
   CurrentWeatherOpen? _openWeather;
-  CurrentWeatherOpenForecast? _openWeatherforecast;
   String img = "143";
   String day = "day";
   List<String> rec = ["7008721914", "1990928662"];
@@ -44,9 +42,7 @@ class _HomepageState extends State<Homepage> {
   getCods() async {
     _position = await _determinePosition();
     setState(() {});
-    getAddress(_position!)
-        .then((value) => getCurrentWeather(lat!, long!))
-        .then((value) => getForecast(lat!, long!));
+    getAddress(_position!).then((value) => getCurrentWeather(lat!, long!));
     setState(() {});
   }
 
@@ -58,11 +54,6 @@ class _HomepageState extends State<Homepage> {
         isCuWeatherLoaded = true;
       });
     }
-  }
-
-  getForecast(double lat, double lon) async {
-    _openWeatherforecast = await _remoteData.getCurrentWeatherOpenForecast(
-        lat.toString(), lon.toString());
   }
 
   @override
@@ -77,8 +68,7 @@ class _HomepageState extends State<Homepage> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text("Disaster Notifier",
-            style: TextStyle(fontSize: 30)),
+        title: const Text("Disaster Notifier", style: TextStyle(fontSize: 30)),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 10),
@@ -191,8 +181,7 @@ class _HomepageState extends State<Homepage> {
                 ),
                 SizedBox(
                     height: 180,
-                    child:Text(
-                            "There is no alerts for your loclity for now"))
+                    child: Text("There is no alerts for your loclity for now"))
               ],
             )),
       ),
@@ -311,7 +300,10 @@ class _HomepageState extends State<Homepage> {
                 if (city == null) {
                 } else {
                   Navigator.of(context).push(MaterialPageRoute(
-                      builder: (context) => weather.Weather(lat: lat!, lon: long!,)));
+                      builder: (context) => weather.Weather(
+                            lat: lat!,
+                            lon: long!,
+                          )));
                 }
               },
               child: Card(
@@ -427,9 +419,7 @@ class _HomepageState extends State<Homepage> {
               children: [
                 IconButton(
                     onPressed: () {
-                      _sendSMS(
-                          "Help $lat $long",
-                          rec);
+                      _sendSMS("Help $lat $long", rec);
                     },
                     icon: const ic.Icon(
                       Icons.help_center,
