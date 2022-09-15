@@ -74,8 +74,6 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
-    - assets/weather/64x64/day/
-    - assets/weather/64x64/night/
     - assets/
     - .env
 
